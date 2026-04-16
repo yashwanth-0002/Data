@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Sales Dashboard 2015</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0e0d;
+    --bg2: #1a1916;
+    --bg3: #242320;
+    --card: #1e1d1b;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0ede8;
+    --muted: #8a8780;
+    --accent: #e85d26;
+    --accent2: #f0a500;
+    --accent3: #4a9e6b;
+    --accent4: #5b7fe8;
+    --accent5: #c45b8a;
+    --pizza-orange: #e85d26;
+    --pizza-gold: #f0a500;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:hover { border-color: rgba(255,255,255,0.2); }
+  .tag {
+    background: rgba(232,93,38,0.15);
+    border: 1px solid rgba(232,93,38,0.3);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    padding: 28px 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* KPI STRIP */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .kpi-card:hover {
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.k1::before { background: var(--accent); }
+  .kpi-card.k2::before { background: var(--accent2); }
+  .kpi-card.k3::before { background: var(--accent3); }
+  .kpi-card.k4::before { background: var(--accent4); }
+  .kpi-card.k5::before { background: var(--accent5); }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .kpi-icon {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    font-size: 22px;
+    opacity: 0.15;
+  }
+
+  /* SLICER ROW */
+  .slicer-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .slicer-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .slicer-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .slicer-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .slicer-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .slicer-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .divider { width: 1px; height: 28px; background: var(--border); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; margin-bottom: 18px; }
+  .grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .grid-main2 { display: grid; grid-template-columns: 1fr 2fr; gap: 18px; margin-bottom: 18px; }
+
+  /* CHART CARDS */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover { border-color: rgba(255,255,255,0.12); }
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+  }
+  .chart-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* INSIGHT CARD */
+  .insight-card {
+    background: rgba(232,93,38,0.07);
+    border: 1px solid rgba(232,93,38,0.2);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  .insight-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .insight-item { }
+  .insight-item-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .insight-item-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .highlight-orange { color: var(--accent); }
+  .highlight-gold { color: var(--accent2); }
+  .highlight-green { color: var(--accent3); }
+  .highlight-blue { color: var(--accent4); }
+
+  /* BAR CHART HORIZONTAL CUSTOM */
+  .hbar-list { display: flex; flex-direction: column; gap: 10px; }
+  .hbar-item { }
+  .hbar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: var(--text);
+  }
+  .hbar-label span:last-child { color: var(--muted); font-weight: 500; }
+  .hbar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hbar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  /* DONUT */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .donut-canvas { flex-shrink: 0; }
+  .donut-legend { flex: 1; }
+  .donut-leg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .donut-leg-row:last-child { border-bottom: none; }
+  .donut-leg-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .donut-leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .donut-leg-val { font-size: 12px; font-weight: 600; font-family: 'Syne', sans-serif; }
+  .donut-leg-pct { font-size: 10px; color: var(--muted); }
+
+  /* FOOTER */
+  .footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .grid-2, .grid-3, .grid-main, .grid-main2 { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🍕</div>
+    <div>
+      <div class="logo-text">PizzaMetrics</div>
+      <div class="logo-sub">Sales Intelligence Dashboard</div>
+    </div>
+  </div>
+  <div class="header-controls">
+    <span class="tag">FY 2015</span>
+    <select id="monthSlicer" onchange="filterByMonth(this.value)">
+      <option value="all">All Months</option>
+      <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-card k1">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-rev">$817,860</div>
+      <div class="kpi-sub">Annual sales · 2015</div>
+    </div>
+    <div class="kpi-card k2">
+      <div class="kpi-icon">🧾</div>
+      <div class="kpi-label">Avg Order Value</div>
+      <div class="kpi-value" id="kpi-aov">$38.31</div>
+      <div class="kpi-sub">Per transaction</div>
+    </div>
+    <div class="kpi-card k3">
+      <div class="kpi-icon">🍕</div>
+      <div class="kpi-label">Pizzas Sold</div>
+      <div class="kpi-value" id="kpi-pizzas">49,574</div>
+      <div class="kpi-sub">Total units</div>
+    </div>
+    <div class="kpi-card k4">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value" id="kpi-orders">21,350</div>
+      <div class="kpi-sub">Unique transactions</div>
+    </div>
+    <div class="kpi-card k5">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-label">Avg Pizzas / Order</div>
+      <div class="kpi-value" id="kpi-avg">2.32</div>
+      <div class="kpi-sub">Per order</div>
+    </div>
+  </div>
+
+  <!-- SLICERS -->
+  <div class="slicer-row">
+    <span class="slicer-label">Category</span>
+    <div class="slicer-group" id="catSlicers">
+      <button class="slicer-btn active" onclick="setCat(this,'all')">All</button>
+      <button class="slicer-btn" onclick="setCat(this,'Classic')">Classic</button>
+      <button class="slicer-btn" onclick="setCat(this,'Chicken')">Chicken</button>
+      <button class="slicer-btn" onclick="setCat(this,'Supreme')">Supreme</button>
+      <button class="slicer-btn" onclick="setCat(this,'Veggie')">Veggie</button>
+    </div>
+    <div class="divider"></div>
+    <span class="slicer-label">Size</span>
+    <div class="slicer-group" id="sizeSlicers">
+      <button class="slicer-btn active" onclick="setSize(this,'all')">All</button>
+      <button class="slicer-btn" onclick="setSize(this,'Regular')">Regular</button>
+      <button class="slicer-btn" onclick="setSize(this,'Medium')">Medium</button>
+      <button class="slicer-btn" onclick="setSize(this,'Large')">Large</button>
+      <button class="slicer-btn" onclick="setSize(this,'X-Large')">X-Large</button>
+    </div>
+    <div class="divider"></div>
+    <span class="slicer-label">Day</span>
+    <div class="slicer-group" id="daySlicers">
+      <button class="slicer-btn active" onclick="setDay(this,'all')">All</button>
+      <button class="slicer-btn" onclick="setDay(this,'Monday')">Mon</button>
+      <button class="slicer-btn" onclick="setDay(this,'Tuesday')">Tue</button>
+      <button class="slicer-btn" onclick="setDay(this,'Wednesday')">Wed</button>
+      <button class="slicer-btn" onclick="setDay(this,'Thursday')">Thu</button>
+      <button class="slicer-btn" onclick="setDay(this,'Friday')">Fri</button>
+      <button class="slicer-btn" onclick="setDay(this,'Saturday')">Sat</button>
+      <button class="slicer-btn" onclick="setDay(this,'Sunday')">Sun</button>
+    </div>
+  </div>
+
+  <!-- ROW 1: Revenue Trend + Busiest Days -->
+  <div class="grid-main">
+    <div class="chart-card">
+      <div class="chart-title">Monthly Revenue Trend</div>
+      <div class="chart-sub">Total revenue by month · All categories</div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="monthlyChart" role="img" aria-label="Monthly revenue trend for 2015"></canvas>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">🔥 Key Insights</div>
+      <div class="insight-row">
+        <div class="insight-item">
+          <div class="insight-item-label">Busiest Days</div>
+          <div class="insight-item-val highlight-orange">Friday & Saturday</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-item-label">Peak Hours</div>
+          <div class="insight-item-val highlight-gold">12–1 PM & 5–8 PM</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-item-label">Top Category</div>
+          <div class="insight-item-val highlight-green">Classic · $220K</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-item-label">Best Size</div>
+          <div class="insight-item-val highlight-blue">Large · 45.9% sales</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-item-label">Weakest Seller</div>
+          <div class="insight-item-val" style="color:#e84646">Brie Carre · 480 orders</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Orders by Day + Hourly Trend -->
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Orders by Day of Week</div>
+      <div class="chart-sub">Total unique orders per weekday</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="dayChart" role="img" aria-label="Orders by day of week"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Hourly Order Volume</div>
+      <div class="chart-sub">Orders by hour of day · peak traffic analysis</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="hourChart" role="img" aria-label="Hourly order volume"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Category Donut + Size Donut + Category Revenue bars -->
+  <div class="grid-3">
+    <div class="chart-card">
+      <div class="chart-title">Sales by Category</div>
+      <div class="chart-sub">Revenue share across pizza categories</div>
+      <div class="donut-wrap">
+        <div class="donut-canvas">
+          <div style="position:relative;width:130px;height:130px">
+            <canvas id="catDonut" role="img" aria-label="Sales by pizza category donut chart"></canvas>
+          </div>
+        </div>
+        <div class="donut-legend" id="catLegend"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Sales by Size</div>
+      <div class="chart-sub">Revenue distribution across pizza sizes</div>
+      <div class="donut-wrap">
+        <div class="donut-canvas">
+          <div style="position:relative;width:130px;height:130px">
+            <canvas id="sizeDonut" role="img" aria-label="Sales by pizza size donut chart"></canvas>
+          </div>
+        </div>
+        <div class="donut-legend" id="sizeLegend"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Category Revenue</div>
+      <div class="chart-sub">Absolute revenue per category</div>
+      <div class="hbar-list" id="catBars" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Top 10 + Bottom 10 -->
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">🏆 Top 10 Best Sellers</div>
+      <div class="chart-sub">By total number of orders</div>
+      <div class="chart-wrap" style="height:340px">
+        <canvas id="top10Chart" role="img" aria-label="Top 10 best selling pizzas by orders"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📉 Bottom 10 Sellers</div>
+      <div class="chart-sub">Lowest-performing items by order count</div>
+      <div class="chart-wrap" style="height:340px">
+        <canvas id="bot10Chart" role="img" aria-label="Bottom 10 selling pizzas by orders"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>PizzaMetrics Dashboard · Data Source: pizza_sales excel file · FY 2015</span>
+  <span>Built for Portfolio · Interactive Slicers Enabled</span>
+</div>
+
+<script>
+const DATA = {
+  monthly: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    revenue: [69793,65160,70397,68737,71403,68230,72558,68278,64180,64028,70395,64701],
+    orders: [1845,1685,1840,1800,1853,1773,1935,1841,1661,1646,1792,1679]
+  },
+  byDay: {
+    labels: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    orders: [2624,2794,2973,3024,3239,3538,3158]
+  },
+  byHour: {
+    labels: ['9','10','11','12','13','14','15','16','17','18','19','20','21','22','23'],
+    orders: [4,17,2672,6543,6203,3521,3170,4185,5143,5359,4350,3487,2528,1370,68]
+  },
+  categories: {
+    labels: ['Classic','Supreme','Chicken','Veggie'],
+    revenue: [220053,208197,195920,193690],
+    pct: [26.91,25.46,23.96,23.68],
+    colors: ['#e85d26','#5b7fe8','#f0a500','#4a9e6b']
+  },
+  sizes: {
+    labels: ['Large','Medium','Regular','X-Large','XX-Large'],
+    revenue: [375319,249382,178076,14076,1007],
+    pct: [45.89,30.49,21.77,1.72,0.12],
+    colors: ['#e85d26','#f0a500','#4a9e6b','#5b7fe8','#c45b8a']
+  },
+  top10: {
+    labels: ['Classic Deluxe','Barbecue Chicken','Hawaiian','Pepperoni','Thai Chicken','California Chicken','Sicilian','Spicy Italian','Southwest Chicken','Four Cheese'],
+    orders: [2416,2372,2370,2369,2315,2302,1887,1887,1885,1850]
+  },
+  bot10: {
+    labels: ['Brie Carre','Mediterranean','Calabrese','Spinach Supreme','Spinach Pesto','Soppressata','Chicken Pesto','Italian Veg','Chicken Alfredo','Green Garden'],
+    orders: [480,923,927,940,957,957,961,975,980,987]
+  }
+};
+
+let activecat='all', activesize='all', activeday='all', activemonth='all';
+
+function truncateLabel(str,n){return str.length>n?str.slice(0,n)+'…':str;}
+
+// CHARTS
+let charts = {};
+
+function initCharts(){
+  // Monthly
+  charts.monthly = new Chart(document.getElementById('monthlyChart'),{
+    type:'bar',
+    data:{
+      labels: DATA.monthly.labels,
+      datasets:[{
+        label:'Revenue ($)',
+        data: DATA.monthly.revenue,
+        backgroundColor: DATA.monthly.revenue.map((v,i)=>
+          v===Math.max(...DATA.monthly.revenue)?'#e85d26':'rgba(232,93,38,0.25)'),
+        borderColor:'transparent',
+        borderRadius:6,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toLocaleString()}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{family:'DM Sans',size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{family:'DM Sans',size:11},callback:v=>'$'+Math.round(v/1000)+'K'}}
+      }
+    }
+  });
+
+  // Day
+  charts.day = new Chart(document.getElementById('dayChart'),{
+    type:'bar',
+    data:{
+      labels: DATA.byDay.labels,
+      datasets:[{
+        data: DATA.byDay.orders,
+        backgroundColor: DATA.byDay.orders.map((v)=>v===Math.max(...DATA.byDay.orders)?'#f0a500':'rgba(240,165,0,0.2)'),
+        borderRadius:5,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}}
+      }
+    }
+  });
+
+  // Hourly
+  charts.hour = new Chart(document.getElementById('hourChart'),{
+    type:'line',
+    data:{
+      labels: DATA.byHour.labels,
+      datasets:[{
+        data: DATA.byHour.orders,
+        borderColor:'#4a9e6b',
+        backgroundColor:'rgba(74,158,107,0.1)',
+        fill:true,
+        tension:0.4,
+        pointBackgroundColor:'#4a9e6b',
+        pointRadius:3,
+        pointHoverRadius:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}}
+      }
+    }
+  });
+
+  // Category Donut
+  charts.catDonut = new Chart(document.getElementById('catDonut'),{
+    type:'doughnut',
+    data:{
+      labels: DATA.categories.labels,
+      datasets:[{data: DATA.categories.pct, backgroundColor: DATA.categories.colors, borderWidth:2, borderColor:'#1e1d1b'}]
+    },
+    options:{
+      cutout:'68%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toFixed(1)+'%'}}}
+    }
+  });
+  buildDonutLegend('catLegend', DATA.categories.labels, DATA.categories.pct, DATA.categories.colors, DATA.categories.revenue);
+
+  // Size Donut
+  charts.sizeDonut = new Chart(document.getElementById('sizeDonut'),{
+    type:'doughnut',
+    data:{
+      labels: DATA.sizes.labels,
+      datasets:[{data: DATA.sizes.pct, backgroundColor: DATA.sizes.colors, borderWidth:2, borderColor:'#1e1d1b'}]
+    },
+    options:{
+      cutout:'68%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toFixed(1)+'%'}}}
+    }
+  });
+  buildDonutLegend('sizeLegend', DATA.sizes.labels, DATA.sizes.pct, DATA.sizes.colors, DATA.sizes.revenue);
+
+  // Category horizontal bars
+  buildCatBars();
+
+  // Top 10
+  const top10Labels = DATA.top10.labels.map(l=>truncateLabel(l,16));
+  const wrapH = Math.max(320, DATA.top10.labels.length * 34 + 60);
+  document.querySelector('#top10Chart').parentElement.style.height = wrapH+'px';
+  charts.top10 = new Chart(document.getElementById('top10Chart'),{
+    type:'bar',
+    data:{
+      labels: top10Labels,
+      datasets:[{data: DATA.top10.orders, backgroundColor:'rgba(91,127,232,0.7)', borderRadius:4, borderSkipped:false}]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}},
+        y:{grid:{display:false},ticks:{color:'#d0cdc8',font:{size:11}}}
+      }
+    }
+  });
+
+  // Bottom 10
+  const bot10Labels = DATA.bot10.labels.map(l=>truncateLabel(l,16));
+  const bot10H = Math.max(320, DATA.bot10.labels.length * 34 + 60);
+  document.querySelector('#bot10Chart').parentElement.style.height = bot10H+'px';
+  charts.bot10 = new Chart(document.getElementById('bot10Chart'),{
+    type:'bar',
+    data:{
+      labels: bot10Labels,
+      datasets:[{data: DATA.bot10.orders, backgroundColor:'rgba(196,91,138,0.7)', borderRadius:4, borderSkipped:false}]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8780',font:{size:11}}},
+        y:{grid:{display:false},ticks:{color:'#d0cdc8',font:{size:11}}}
+      }
+    }
+  });
+}
+
+function buildDonutLegend(id, labels, pcts, colors, revs){
+  const el = document.getElementById(id);
+  el.innerHTML = labels.map((l,i)=>`
+    <div class="donut-leg-row">
+      <div class="donut-leg-name">
+        <div class="donut-leg-dot" style="background:${colors[i]}"></div>
+        <span style="font-size:11px;color:#d0cdc8">${l}</span>
+      </div>
+      <div style="text-align:right">
+        <div class="donut-leg-val" style="color:${colors[i]}">${pcts[i].toFixed(1)}%</div>
+        <div class="donut-leg-pct">$${Math.round(revs[i]/1000)}K</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildCatBars(){
+  const max = Math.max(...DATA.categories.revenue);
+  document.getElementById('catBars').innerHTML = DATA.categories.labels.map((l,i)=>`
+    <div class="hbar-item">
+      <div class="hbar-label">
+        <span style="color:${DATA.categories.colors[i]};font-weight:600">${l}</span>
+        <span>$${Math.round(DATA.categories.revenue[i]/1000)}K</span>
+      </div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${(DATA.categories.revenue[i]/max*100).toFixed(1)}%;background:${DATA.categories.colors[i]}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// SLICER LOGIC
+function setCat(btn, val){
+  activecat=val;
+  document.querySelectorAll('#catSlicers .slicer-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function setSize(btn, val){
+  activesize=val;
+  document.querySelectorAll('#sizeSlicers .slicer-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function setDay(btn, val){
+  activeday=val;
+  document.querySelectorAll('#daySlicers .slicer-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function filterByMonth(val){ activemonth=val; applyFilters(); }
+
+const catMap={'Classic':'CLargeassic'};
+function normCat(c){return c==='Classic'?'CLargeassic':c;}
+
+function applyFilters(){
+  // We simulate filtered data using multipliers based on known breakdowns
+  const catPcts={all:1,'Classic':0.2691,'Chicken':0.2396,'Supreme':0.2546,'Veggie':0.2368};
+  const sizePcts={all:1,'Regular':0.2177,'Medium':0.3049,'Large':0.4589,'X-Large':0.0172,'XX-Large':0.0012};
+  const dayPcts={all:1,'Sunday':2624/21350,'Monday':2794/21350,'Tuesday':2973/21350,'Wednesday':3024/21350,'Thursday':3239/21350,'Friday':3538/21350,'Saturday':3158/21350};
+  const monthMults=[0,0.0853,0.0796,0.086,0.0841,0.0873,0.0835,0.0887,0.0835,0.0785,0.0783,0.086,0.0792];
+  const m=activemonth==='all'?1:monthMults[parseInt(activemonth)]*12;
+
+  const mult = catPcts[activecat]*sizePcts[activesize]*dayPcts[activeday]*m;
+
+  const rev = Math.round(817860*mult);
+  const orders = Math.round(21350*mult);
+  const pizzas = Math.round(49574*mult);
+  const aov = orders>0?(rev/orders).toFixed(2):0;
+  const avppo = orders>0?(pizzas/orders).toFixed(2):0;
+
+  document.getElementById('kpi-rev').textContent = '$'+rev.toLocaleString();
+  document.getElementById('kpi-aov').textContent = '$'+aov;
+  document.getElementById('kpi-pizzas').textContent = pizzas.toLocaleString();
+  document.getElementById('kpi-orders').textContent = orders.toLocaleString();
+  document.getElementById('kpi-avg').textContent = avppo;
+
+  // Update monthly chart
+  const newMonthly = DATA.monthly.revenue.map(v=>Math.round(v*(mult/(activemonth==='all'?1:1))));
+  charts.monthly.data.datasets[0].data = DATA.monthly.revenue.map(v=>Math.round(v*(catPcts[activecat]*sizePcts[activesize]*dayPcts[activeday])));
+  charts.monthly.data.datasets[0].backgroundColor = charts.monthly.data.datasets[0].data.map((v,i,arr)=>v===Math.max(...arr)?'#e85d26':'rgba(232,93,38,0.25)');
+  charts.monthly.update('none');
+}
+
+initCharts();
+</script>
+</body>
+</html>
